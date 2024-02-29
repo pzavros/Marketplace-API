@@ -3,7 +3,8 @@ const { Sequelize, DataTypes } = require('sequelize');
 // Establish a connection to the database
 const sequelize = new Sequelize({
   dialect: 'sqlite',
-  storage: './db/marketplace.db'
+  storage: './db/marketplace.db',
+  logging: console.log,
 });
 
 
@@ -66,30 +67,35 @@ const User = sequelize.define('User', {
   timestamps: false
 });
 
-// Create Cart table
+
+// Define Cart model
 const Cart = sequelize.define('Cart', {
   id: {
     type: DataTypes.INTEGER,
+    allowNull: false,
     primaryKey: true,
     autoIncrement: true
   },
   userId: {
     type: DataTypes.INTEGER,
+    allowNull: false,
     references: {
-      model: 'Users',
+      model: User,
       key: 'id'
     }
   },
-  productId: {
-    type: DataTypes.INTEGER,
-    references: {
-      model: 'Products',
-      key: 'id'
-    }
+  // Define an array to store product IDs
+  productIds: {
+    type: DataTypes.ARRAY(DataTypes.INTEGER),
+    defaultValue: []
   }
 }, {
   timestamps: false
 });
+
+// Define association between User and Cart
+User.hasOne(Cart, { foreignKey: 'userId' });
+Cart.belongsTo(User, { foreignKey: 'userId' });
 
 
 // Initialize the express application
@@ -379,82 +385,96 @@ app.delete('/user/delete/:id', async (req, res) => {
   }
 });
 
-
-
-// Cart Routes
-// Get User's Cart
-app.get('/api/user/getCart', async (req, res) => {
-  const { userId } = req.query; // Assuming you're passing the userId as a query parameter
-
-  if (isNaN(userId) || userId <= 0 || userId === '') {
-    return res.status(422).json({ error: 'Invalid userID' });
-  }
-
-  if (!userId) {
-    return res.status(422).json({ error: 'User does not exist' });
-  }
+// Get user's cart
+app.get('/api/user/:userId/getCart', async (req, res) => {
+  const { userId } = req.params;
 
   try {
-    const cartItems = await CartItems.findAll({
-      where: { userId },
-      attributes: ['productId'], // Assuming you just want to return an array of productIds
-    });
+    // Validate user ID
+    if (isNaN(userId) || parseInt(userId) <= 0) {
+      return res.status(422).json({ error: 'Invalid user ID' });
+    }
 
-    const productIDs = cartItems.map(item => item.productId);
+    const user = await User.findByPk(userId);
 
-    res.status(200).json({
-      userID: parseInt(userId),
-      productIDs: productIDs
+    // Check if user exists
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Fetch the user's cart
+    const cart = await user.getCart();
+
+    // Check if cart exists
+    if (!cart) {
+      return res.status(422).json({ error: 'Cart not found' });
+    }
+
+    // Fetch product details for each product ID in the cart
+    const products = await Promise.all(
+      cart.productIds.map(async (productId) => await Product.findByPk(productId))
+    );
+
+    // Return response with cart details and product information
+    return res.status(200).json({
+      cartId: cart.id,
+      userId: cart.userId,
+      productIds: products.map((product) => product.id)
     });
   } catch (error) {
-    res.status(422).json({ error: 'Could not retrieve cart items.' });
+    console.error(error);
+    return res.status(500).json({ error: 'Error retrieving cart' });
   }
 });
 
 
-// Add Product to Cart
-app.post('/api/user/addToCart', async (req, res) => {
-  const { userID, productID } = req.body;
-
-  // Validate the provided IDs
-  if (!userID || isNaN(userID) || !productID || isNaN(productID)) {
-    return res.status(422).json({ error: 'Invalid userID or productID provided.' });
-  }
+// Add product to user's cart
+app.post('/api/user/:userId/addToCart', async (req, res) => {
+  const { userId, productId } = req.body;
 
   try {
-    // Check if user and product exist
-    const userExists = await User.findByPk(userID);
-    const productExists = await Product.findByPk(productID);
-
-    if (!userExists || !productExists) {
-      return res.status(422).json({ error: 'User or Product does not exist.' });
+    // Validate user ID and product ID
+    if (isNaN(userId) || parseInt(userId) <= 0 || isNaN(productId) || parseInt(productId) <= 0) {
+      return res.status(422).json({ error: 'Invalid user ID or product ID' });
     }
 
-    // Check if product already exists in the user's cart
-    const existingCartItem = await Cart.findOne({ where: { userId: userID, productId: productID } });
+    const user = await User.findByPk(userId);
 
-    if (existingCartItem) {
-      return res.status(422).json({ error: 'Product already exists in the cart.' });
+    // Check if user exists
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
     }
 
-    // Add product to the cart
-    const newCartItem = await Cart.create({ userId: userID, productId: productID });
+    const product = await Product.findByPk(productId);
 
-    // Fetch all items in the user's cart to return
-    const cartItems = await Cart.findAll({
-      where: { userId: userID },
-      attributes: ['productId'], // Assuming you only want to return the product IDs
-    });
+    // Check if product exists
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
+    }
 
-    const productIDs = cartItems.map(item => item.productId);
+    // Fetch the user's cart
+    const cart = await user.getCart();
 
-    res.status(200).json({ productIDs });
+    // Check if cart exists
+    if (!cart) {
+      // Create a new cart if it doesn't exist
+      const newCart = await Cart.create({ userId });
+      cart = newCart;
+    }
+
+    // Check if product already exists in the cart
+    if (cart.productIds.includes(productId)) {
+      return res.status(422).json({ error: 'Product already exists in the cart' });
+    }
 
   } catch (error) {
-    console.error('Error adding product to cart:', error);
-    res.status(500).json({ error: 'An error occurred while adding the product to the cart.' });
+    console.error(error);
+    return res.status(500).json({ error: 'Error adding product to cart' });
   }
-});
+}
+);
+
+
 
 
 
