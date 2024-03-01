@@ -106,8 +106,10 @@ const port = 3000;
 app.use(express.json());
 
 
+
+
 // Category Routes
-app.get('/categories', async (req, res) => {
+app.get('/api/categories', async (req, res) => {
   try {
     const categories = await Category.findAll();
     res.status(200).json(categories);
@@ -116,7 +118,7 @@ app.get('/categories', async (req, res) => {
   }
 });
 
-app.get('/:id', async (req, res) => {
+app.get('/api/:id', async (req, res) => {
   try {
     const category = await Category.findByPk(req.params.id);
     res.status(200).json(category);
@@ -126,7 +128,7 @@ app.get('/:id', async (req, res) => {
 });
 
 //Create Category
-app.post('/categories/create', async (req, res) => {
+app.post('/api/categories/create', async (req, res) => {
   const { name } = req.body;
   if (!name || name.length > 50) {
     return res.status(422).json({ error: 'Invalid category name.' });
@@ -144,7 +146,7 @@ app.post('/categories/create', async (req, res) => {
 });
 
 // Delete Category
-app.delete('/categories/delete/:id', async (req, res) => {
+app.delete('/api/categories/delete/:id', async (req, res) => {
   const id = req.params.id;
 
   // Check if the ID is valid and a positive integer
@@ -173,7 +175,7 @@ app.delete('/categories/delete/:id', async (req, res) => {
 
 
 // Product Routes
-app.post('/product/create', async (req, res) => {
+app.post('/api/product/create', async (req, res) => {
   const { name, description = "No product description", price, stock, categoryId } = req.body;
 
   if (!name || !price || !stock || !categoryId) {
@@ -202,7 +204,7 @@ app.post('/product/create', async (req, res) => {
 
 });
 
-app.get('/product/:id', async (req, res) => {
+app.get('/api/product/:id', async (req, res) => {
   const { id } = req.params;
   try {
     // Check if id is a valid integer
@@ -222,7 +224,7 @@ app.get('/product/:id', async (req, res) => {
   }
 });
 
-app.delete('/product/delete/:id', async (req, res) => {
+app.delete('/api/product/delete/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const product = await Product.findByPk(id);
@@ -240,7 +242,7 @@ app.delete('/product/delete/:id', async (req, res) => {
 
 });
 
-app.get('/products/list', async (req, res) => {
+app.get('/api/products/list', async (req, res) => {
   try {
     const products = await Product.findAll({
       include: Category
@@ -253,7 +255,7 @@ app.get('/products/list', async (req, res) => {
   }
 });
 
-app.put('/product/update/:id', async (req, res) => {
+app.put('/api/product/update/:id', async (req, res) => {
   const { id } = req.params;
   const { name, description, price, stock, categoryId } = req.body;
 
@@ -292,7 +294,7 @@ app.put('/product/update/:id', async (req, res) => {
 
 // User Routes
 // Create User
-app.post('/user/create', async (req, res) => {
+app.post('/api/user/create', async (req, res) => {
   const { username, accountBalance} = req.body;
 
   if (!username) {
@@ -314,7 +316,7 @@ app.post('/user/create', async (req, res) => {
 });
 
 // List Users
-app.get('/user/list', async (req, res) => {
+app.get('/api/user/list', async (req, res) => {
   try {
     const users = await User.findAll();
     res.status(200).json(users);
@@ -325,7 +327,7 @@ app.get('/user/list', async (req, res) => {
 });
 
 // Get user by ID
-app.get('/user/:id', async (req, res) => {
+app.get('/api/user/:id', async (req, res) => {
   const { id } = req.params;
   try {
     if (isNaN(id) || id <= 0 || id === '') {
@@ -342,7 +344,7 @@ app.get('/user/:id', async (req, res) => {
 });
 
 // Delete User
-app.delete('/user/delete/:id', async (req, res) => {
+app.delete('/api/user/delete/:id', async (req, res) => {
   const { id } = req.params;
   try {
     if (isNaN(id) || id <= 0 || id === '') {
