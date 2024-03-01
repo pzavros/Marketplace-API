@@ -106,6 +106,8 @@ const port = 3000;
 app.use(express.json());
 
 
+
+
 // Category Routes
 app.get('/api/categories', async (req, res) => {
   try {
