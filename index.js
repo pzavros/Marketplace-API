@@ -107,7 +107,7 @@ app.use(express.json());
 
 
 // Category Routes
-app.get('/categories', async (req, res) => {
+app.get('/api/categories', async (req, res) => {
   try {
     const categories = await Category.findAll();
     res.status(200).json(categories);
@@ -116,7 +116,7 @@ app.get('/categories', async (req, res) => {
   }
 });
 
-app.get('/:id', async (req, res) => {
+app.get('/api/:id', async (req, res) => {
   try {
     const category = await Category.findByPk(req.params.id);
     res.status(200).json(category);
@@ -126,7 +126,7 @@ app.get('/:id', async (req, res) => {
 });
 
 //Create Category
-app.post('/categories/create', async (req, res) => {
+app.post('/api/categories/create', async (req, res) => {
   const { name } = req.body;
   if (!name || name.length > 50) {
     return res.status(422).json({ error: 'Invalid category name.' });
@@ -144,7 +144,7 @@ app.post('/categories/create', async (req, res) => {
 });
 
 // Delete Category
-app.delete('/categories/delete/:id', async (req, res) => {
+app.delete('/api/categories/delete/:id', async (req, res) => {
   const id = req.params.id;
 
   // Check if the ID is valid and a positive integer
@@ -162,7 +162,7 @@ app.delete('/categories/delete/:id', async (req, res) => {
     await Category.destroy({
       where: { id }
     });
-    res.status(200).send('OK');
+    res.status(200).send('Category deleted!');
   } catch (error) {
     res.status(422).json({ error: error.message });
   }
@@ -173,7 +173,7 @@ app.delete('/categories/delete/:id', async (req, res) => {
 
 
 // Product Routes
-app.post('/product/create', async (req, res) => {
+app.post('/api/product/create', async (req, res) => {
   const { name, description = "No product description", price, stock, categoryId } = req.body;
 
   if (!name || !price || !stock || !categoryId) {
@@ -202,7 +202,7 @@ app.post('/product/create', async (req, res) => {
 
 });
 
-app.get('/product/:id', async (req, res) => {
+app.get('/api/product/:id', async (req, res) => {
   const { id } = req.params;
   try {
     // Check if id is a valid integer
@@ -222,7 +222,7 @@ app.get('/product/:id', async (req, res) => {
   }
 });
 
-app.delete('/product/delete/:id', async (req, res) => {
+app.delete('/api/product/delete/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const product = await Product.findByPk(id);
@@ -240,7 +240,7 @@ app.delete('/product/delete/:id', async (req, res) => {
 
 });
 
-app.get('/products/list', async (req, res) => {
+app.get('/api/products/list', async (req, res) => {
   try {
     const products = await Product.findAll({
       include: Category
@@ -253,7 +253,7 @@ app.get('/products/list', async (req, res) => {
   }
 });
 
-app.put('/product/update/:id', async (req, res) => {
+app.put('/api/product/update/:id', async (req, res) => {
   const { id } = req.params;
   const { name, description, price, stock, categoryId } = req.body;
 
@@ -292,7 +292,7 @@ app.put('/product/update/:id', async (req, res) => {
 
 // User Routes
 // Create User
-app.post('/user/create', async (req, res) => {
+app.post('/api/user/create', async (req, res) => {
   const { username, accountBalance} = req.body;
 
   if (!username) {
@@ -314,7 +314,7 @@ app.post('/user/create', async (req, res) => {
 });
 
 // List Users
-app.get('/user/list', async (req, res) => {
+app.get('/api/user/list', async (req, res) => {
   try {
     const users = await User.findAll();
     res.status(200).json(users);
@@ -325,7 +325,7 @@ app.get('/user/list', async (req, res) => {
 });
 
 // Get user by ID
-app.get('/user/:id', async (req, res) => {
+app.get('/api/user/:id', async (req, res) => {
   const { id } = req.params;
   try {
     if (isNaN(id) || id <= 0 || id === '') {
@@ -342,7 +342,7 @@ app.get('/user/:id', async (req, res) => {
 });
 
 // Delete User
-app.delete('/user/delete/:id', async (req, res) => {
+app.delete('/api/user/delete/:id', async (req, res) => {
   const { id } = req.params;
   try {
     if (isNaN(id) || id <= 0 || id === '') {
@@ -386,93 +386,93 @@ app.delete('/user/delete/:id', async (req, res) => {
 });
 
 // Get user's cart
-app.get('/api/user/:userId/getCart', async (req, res) => {
-  const { userId } = req.params;
+// app.get('/api/user/:userId/getCart', async (req, res) => {
+//   const { userId } = req.params;
 
-  try {
-    // Validate user ID
-    if (isNaN(userId) || parseInt(userId) <= 0) {
-      return res.status(422).json({ error: 'Invalid user ID' });
-    }
+//   try {
+//     // Validate user ID
+//     if (isNaN(userId) || parseInt(userId) <= 0) {
+//       return res.status(422).json({ error: 'Invalid user ID' });
+//     }
 
-    const user = await User.findByPk(userId);
+//     const user = await User.findByPk(userId);
 
-    // Check if user exists
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+//     // Check if user exists
+//     if (!user) {
+//       return res.status(404).json({ error: 'User not found' });
+//     }
 
-    // Fetch the user's cart
-    const cart = await user.getCart();
+//     // Fetch the user's cart
+//     const cart = await user.getCart();
 
-    // Check if cart exists
-    if (!cart) {
-      return res.status(422).json({ error: 'Cart not found' });
-    }
+//     // Check if cart exists
+//     if (!cart) {
+//       return res.status(422).json({ error: 'Cart not found' });
+//     }
 
-    // Fetch product details for each product ID in the cart
-    const products = await Promise.all(
-      cart.productIds.map(async (productId) => await Product.findByPk(productId))
-    );
+//     // Fetch product details for each product ID in the cart
+//     const products = await Promise.all(
+//       cart.productIds.map(async (productId) => await Product.findByPk(productId))
+//     );
 
-    // Return response with cart details and product information
-    return res.status(200).json({
-      cartId: cart.id,
-      userId: cart.userId,
-      productIds: products.map((product) => product.id)
-    });
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: 'Error retrieving cart' });
-  }
-});
+//     // Return response with cart details and product information
+//     return res.status(200).json({
+//       cartId: cart.id,
+//       userId: cart.userId,
+//       productIds: products.map((product) => product.id)
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ error: 'Error retrieving cart' });
+//   }
+// });
 
 
-// Add product to user's cart
-app.post('/api/user/:userId/addToCart', async (req, res) => {
-  const { userId, productId } = req.body;
+// // Add product to user's cart
+// app.post('/api/user/:userId/addToCart', async (req, res) => {
+//   const { userId, productId } = req.body;
 
-  try {
-    // Validate user ID and product ID
-    if (isNaN(userId) || parseInt(userId) <= 0 || isNaN(productId) || parseInt(productId) <= 0) {
-      return res.status(422).json({ error: 'Invalid user ID or product ID' });
-    }
+//   try {
+//     // Validate user ID and product ID
+//     if (isNaN(userId) || parseInt(userId) <= 0 || isNaN(productId) || parseInt(productId) <= 0) {
+//       return res.status(422).json({ error: 'Invalid user ID or product ID' });
+//     }
 
-    const user = await User.findByPk(userId);
+//     const user = await User.findByPk(userId);
 
-    // Check if user exists
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
+//     // Check if user exists
+//     if (!user) {
+//       return res.status(404).json({ error: 'User not found' });
+//     }
 
-    const product = await Product.findByPk(productId);
+//     const product = await Product.findByPk(productId);
 
-    // Check if product exists
-    if (!product) {
-      return res.status(404).json({ error: 'Product not found' });
-    }
+//     // Check if product exists
+//     if (!product) {
+//       return res.status(404).json({ error: 'Product not found' });
+//     }
 
-    // Fetch the user's cart
-    const cart = await user.getCart();
+//     // Fetch the user's cart
+//     const cart = await user.getCart();
 
-    // Check if cart exists
-    if (!cart) {
-      // Create a new cart if it doesn't exist
-      const newCart = await Cart.create({ userId });
-      cart = newCart;
-    }
+//     // Check if cart exists
+//     if (!cart) {
+//       // Create a new cart if it doesn't exist
+//       const newCart = await Cart.create({ userId });
+//       cart = newCart;
+//     }
 
-    // Check if product already exists in the cart
-    if (cart.productIds.includes(productId)) {
-      return res.status(422).json({ error: 'Product already exists in the cart' });
-    }
+//     // Check if product already exists in the cart
+//     if (cart.productIds.includes(productId)) {
+//       return res.status(422).json({ error: 'Product already exists in the cart' });
+//     }
 
-  } catch (error) {
-    console.error(error);
-    return res.status(500).json({ error: 'Error adding product to cart' });
-  }
-}
-);
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ error: 'Error adding product to cart' });
+//   }
+// }
+// );
 
 
 
@@ -480,6 +480,7 @@ app.post('/api/user/:userId/addToCart', async (req, res) => {
 
 
 // start API server
+
 app.listen(port, () => {
   console.log(`server listening at port 3000`)
   console.log(`Press Ctrl+C to exit...`)
