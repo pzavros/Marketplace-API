@@ -9,7 +9,7 @@ Follow these instructions to get the API to run locally for development and test
 
 ### Cloning the Repository
 ```bash
-git clone https://github.com/pzavros/Marketplace-API---Assignment
+git clone https://github.com/pzavros/Marketplace-API
 ```
 
 ### Installing Dependencies
